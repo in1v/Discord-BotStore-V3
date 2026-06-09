@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: discord-botstore-v3
+    runtime: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: NODE_ENV
+        value: production
+      - key: TOKEN
+        sync: false
+      - key: CLIENT_ID
+        sync: false
+      - key: GUILD_ID
+        sync: false
+      - key: MERCADO_PAGO_ACCESS_TOKEN
+        sync: false
+      - key: ENABLE_WELCOME
+        value: "false"
+      - key: PANEL_HOST
+        value: 0.0.0.0
+      - key: PANEL_PASSWORD
+        sync: false
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: DATA_DIR
+        value: /opt/render/project-data/data
+      - key: UPLOAD_DIR
+        value: /opt/render/project-data/uploads
+    disk:
+      name: botstore-data
+      mountPath: /opt/render/project-data
+      sizeGB: 5
