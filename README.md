@@ -182,26 +182,54 @@ Se algum token já foi commitado ou compartilhado, gere outro token no Discord D
 
 ## Deploy em produção
 
-Não hospede o bot completo na Netlify. A Netlify é boa para site estático e funções serverless, mas este projeto precisa de um processo Node contínuo para manter o `discord.js` conectado ao Gateway do Discord. Use um host de aplicação Node, como Render, Railway, Fly.io ou uma VPS.
+Não hospede o bot completo na Netlify. A Netlify é boa para site estático e funções serverless, mas este projeto precisa de um processo Node contínuo para manter o `discord.js` conectado ao Gateway do Discord.
 
-Configuração recomendada para host Node:
+Use Render como **Web Service**. Assim o mesmo deploy liga o bot, a API e o painel.
+
+### Deploy no Render com Blueprint
+
+O projeto inclui `render.yaml`. Depois de subir o repositório para o GitHub:
+
+1. Acesse o Render Dashboard.
+2. Clique em **New > Blueprint**.
+3. Conecte o repositório.
+4. Confirme o serviço `discord-botstore-v3`.
+5. Preencha as variáveis marcadas como secret/sync false.
+6. Faça o deploy.
+
+O Blueprint configura:
 
 - Build command: `npm install`
 - Start command: `npm start`
 - Node: `20` ou mais recente
-- Variáveis de ambiente:
-  - `TOKEN`
-  - `CLIENT_ID`
-  - `GUILD_ID`, opcional
-  - `MERCADO_PAGO_ACCESS_TOKEN`, se usar PIX
-  - `ENABLE_WELCOME=false` ou `true`
-  - `PANEL_HOST=0.0.0.0`
-  - `PANEL_PASSWORD=uma_senha_forte`
-  - `PUBLIC_BASE_URL=https://dominio-gerado-pelo-host`
+- `PANEL_HOST=0.0.0.0`
+- `DATA_DIR=/opt/render/project-data/data`
+- `UPLOAD_DIR=/opt/render/project-data/uploads`
+- Disk persistente em `/opt/render/project-data`
 
-Depois do primeiro deploy, copie o domínio gerado pelo host e configure em `PUBLIC_BASE_URL`. Esse domínio será o endereço público do painel e também será usado nas URLs de imagem enviadas pelo painel.
+Variáveis que você precisa preencher no Render:
 
-Observação: se o host apagar arquivos locais entre deploys ou reinícios, use volume/disco persistente para preservar `data/store.sqlite` e `public/uploads`.
+- `TOKEN`
+- `CLIENT_ID`
+- `GUILD_ID`, opcional
+- `MERCADO_PAGO_ACCESS_TOKEN`, se usar PIX
+- `PANEL_PASSWORD`
+- `PUBLIC_BASE_URL`
+
+Depois do primeiro deploy, o Render vai gerar um domínio como:
+
+```txt
+https://discord-botstore-v3.onrender.com
+```
+
+Copie esse domínio e salve em `PUBLIC_BASE_URL`. Esse será o endereço público do painel e também será usado nas URLs de imagem enviadas pelo painel.
+
+### Observações importantes sobre Render
+
+- Use um plano que não durma para manter o bot online 24/7.
+- Persistent Disk no Render é necessário para preservar SQLite e uploads.
+- O disk deixa o serviço single-instance, o que é adequado para este bot.
+- Faça backup periódico do arquivo em `DATA_DIR/store.sqlite`.
 
 ## Segurança
 

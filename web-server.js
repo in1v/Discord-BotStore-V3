@@ -83,13 +83,12 @@ function productReady(product) {
   return Boolean(product?.name && Number(product.price) > 0 && String(product.description || "").trim());
 }
 
-function localUploadFile(publicDir, imageUrl) {
+function localUploadFile(uploadDir, imageUrl) {
   try {
     const url = new URL(String(imageUrl || ""));
-    if (!["127.0.0.1", "localhost"].includes(url.hostname)) return null;
     if (!url.pathname.startsWith("/uploads/")) return null;
     const fileName = path.basename(url.pathname);
-    const filePath = path.join(publicDir, "uploads", fileName);
+    const filePath = path.join(uploadDir, fileName);
     if (!fs.existsSync(filePath)) return null;
     return { fileName, filePath };
   } catch {
@@ -136,10 +135,11 @@ function createWebServer(client, handlers = {}) {
   const app = express();
   app.set("trust proxy", 1);
   const publicDir = path.join(__dirname, "public");
-  const uploadDir = path.join(publicDir, "uploads");
+  const uploadDir = config.uploadDir || path.join(publicDir, "uploads");
   fs.mkdirSync(uploadDir, { recursive: true });
 
   app.use(express.json({ limit: "8mb" }));
+  app.use("/uploads", express.static(uploadDir));
   app.use(express.static(publicDir));
 
   app.post("/auth/login", (request, response) => {
@@ -461,7 +461,7 @@ function createWebServer(client, handlers = {}) {
 
     const productForEmbed = { ...product };
     const files = [];
-    const localImage = localUploadFile(publicDir, product.imageUrl);
+    const localImage = localUploadFile(uploadDir, product.imageUrl);
     if (localImage) {
       productForEmbed.imageUrl = `attachment://${localImage.fileName}`;
       files.push({ attachment: localImage.filePath, name: localImage.fileName });

@@ -2,8 +2,9 @@ const fs = require("fs");
 const path = require("path");
 const Database = require("better-sqlite3");
 const moment = require("moment");
+const config = require("./config");
 
-const dataDir = path.join(__dirname, "data");
+const dataDir = config.dataDir || path.join(__dirname, "data");
 fs.mkdirSync(dataDir, { recursive: true });
 
 const sqlite = new Database(path.join(dataDir, "store.sqlite"));
