@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Discord Store Panel</title>
+    <link rel="stylesheet" href="/styles.css?v=36">
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="rail">
+        <div class="brand">
+          <span class="brand-mark">DS</span>
+          <div>
+            <strong>Store Panel</strong>
+            <small id="botTag">desconectado</small>
+          </div>
+        </div>
+        <nav>
+          <button class="nav-button is-active" data-view="dashboard">Dashboard</button>
+          <button class="nav-button" data-view="products">Produtos</button>
+          <button class="nav-button" data-view="orders">Pedidos</button>
+          <button class="nav-button" data-view="events">Eventos</button>
+          <button class="nav-button" data-view="settings">Configurações</button>
+        </nav>
+      </aside>
+
+      <main>
+        <header class="topbar">
+          <div>
+            <h1 id="pageTitle">Dashboard</h1>
+            <p>Operacao local conectada ao bot e ao banco SQLite.</p>
+          </div>
+          <div class="top-actions">
+            <button id="clearEventsButton" class="danger" title="Deletar eventos" hidden>Deletar eventos</button>
+            <button id="refreshButton" class="icon-button" title="Atualizar">↻</button>
+          </div>
+        </header>
+
+        <section id="dashboardView" class="view is-visible">
+          <section class="panel onboarding-panel" id="onboardingPanel">
+            <div class="section-title">
+              <h2>Primeira configuração</h2>
+              <button type="button" id="dismissOnboardingButton" class="ghost-button">Ocultar</button>
+            </div>
+            <div id="setupChecklist" class="setup-checklist"></div>
+          </section>
+
+          <div class="metrics">
+            <article>
+              <span>Hoje</span>
+              <strong id="todayRevenue">R$0,00</strong>
+              <small id="todayOrders">0 pedidos</small>
+            </article>
+            <article>
+              <span>7 dias</span>
+              <strong id="weekRevenue">R$0,00</strong>
+              <small id="weekOrders">0 pedidos</small>
+            </article>
+            <article>
+              <span>30 dias</span>
+              <strong id="monthRevenue">R$0,00</strong>
+              <small id="monthOrders">0 pedidos</small>
+            </article>
+            <article>
+              <span>Total</span>
+              <strong id="totalRevenue">R$0,00</strong>
+              <small id="totalOrders">0 pedidos</small>
+            </article>
+          </div>
+
+          <div class="work-grid">
+            <section class="panel">
+              <div class="section-title">
+                <h2>Top produtos</h2>
+              </div>
+              <div id="topProductsList" class="compact-list"></div>
+            </section>
+            <section class="panel">
+              <div class="section-title">
+                <h2>Estoque baixo</h2>
+              </div>
+              <div id="lowStockList" class="compact-list"></div>
+            </section>
+            <section class="panel">
+              <div class="section-title">
+                <h2>Receita recente</h2>
+              </div>
+              <div id="dailyStatsList" class="compact-list"></div>
+            </section>
+            <section class="panel">
+              <div class="section-title">
+                <h2>Produtos em estoque</h2>
+                <button id="newProductButton">Novo</button>
+              </div>
+              <div id="dashboardProducts" class="compact-list"></div>
+            </section>
+            <section class="panel">
+              <div class="section-title">
+                <h2>Pedidos recentes</h2>
+              </div>
+              <div id="dashboardOrders" class="compact-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="productsView" class="view">
+          <div class="product-layout is-editor-hidden">
+            <section class="panel product-list-panel">
+              <div class="section-title">
+                <h2>Catalogo</h2>
+                <button id="reloadProductsButton" class="ghost-button">Sincronizar</button>
+              </div>
+              <input id="productSearch" type="search" placeholder="Buscar produto por nome ou ID">
+              <button type="button" id="addProductButton" class="product-new-button">+ Novo produto</button>
+              <div id="productList" class="product-list"></div>
+              <p class="catalog-count" id="catalogCount">0 produtos cadastrados</p>
+            </section>
+
+            <section class="panel editor-panel">
+              <div class="section-title">
+                <h2 id="productEditorTitle">Editar produto</h2>
+                <button id="clearFormButton">Limpar</button>
+              </div>
+
+              <form id="productForm">
+                <div class="product-form-section">
+                  <h3><span>1</span> Informações do produto</h3>
+                  <div class="product-field-grid">
+                    <label>
+                      ID
+                      <input id="productId" name="id" type="text" required placeholder="nitro-basic">
+                    </label>
+                    <label>
+                      Nome
+                      <input id="productName" name="name" type="text" required placeholder="Nitro Basic">
+                    </label>
+                    <label>
+                      Preco
+                      <span class="price-input-wrap">
+                        <strong>R$</strong>
+                        <input id="productPrice" name="price" type="number" min="0" step="0.01" required placeholder="9.90">
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="product-form-section">
+                  <h3><span>2</span> Canal e publicação</h3>
+                  <div class="product-field-grid">
+                    <label>
+                      Canal de destino
+                      <input id="productSalesChannelId" name="salesChannelId" type="hidden">
+                      <div class="custom-select" data-custom-select="productSalesChannelId"></div>
+                      <small>Salvar alterações atualiza apenas o painel. Para mudar a embed no Discord, publique novamente.</small>
+                    </label>
+                    <div class="publication-state">
+                      <span>Status</span>
+                      <strong id="productPublishState"><i></i> Não publicado</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="product-form-section">
+                  <h3><span>3</span> Imagem da embed</h3>
+                  <label>
+                    URL da imagem da embed
+                    <input id="productImage" name="imageUrl" type="url" placeholder="https://...">
+                  </label>
+                  <div class="upload-row">
+                    <input id="productImageFile" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+                    <button type="button" id="uploadProductImageButton" class="ghost-button">Selecionar arquivo</button>
+                    <span id="uploadProductImageStatus">PNG, JPG ou WEBP até 5MB.</span>
+                  </div>
+                </div>
+
+                <div class="product-form-section">
+                  <h3><span>4</span> Descrição da venda</h3>
+                  <label>
+                    Descrição enviada na embed de venda
+                    <textarea id="productDescription" name="description" rows="4" maxlength="500" placeholder="Descricao enviada na embed de venda"></textarea>
+                  </label>
+                  <small class="character-counter" id="productDescriptionCounter">0/500</small>
+                </div>
+
+                <p class="publish-warning" id="productPublishNotice">As alterações salvas só aparecem no Discord depois de publicar a embed novamente.</p>
+              </form>
+            </section>
+
+            <section class="product-side">
+              <section class="panel preview-panel">
+                <div class="section-title">
+                  <h2>Preview</h2>
+                  <small>ⓘ</small>
+                </div>
+                <div class="discord-preview product-preview-card">
+                  <div class="preview-title" id="previewTitle">Discord Store | Produto</div>
+                  <div class="preview-description" id="previewDescription">Sem descricao</div>
+                  <img id="previewImage" alt="">
+                  <small class="discord-footer" id="previewFooter">Para comprar clique no botao abaixo.</small>
+                </div>
+              </section>
+              <section class="panel publish-status-panel">
+                <div class="section-title">
+                  <h2>Status de publicação</h2>
+                </div>
+                <div class="publish-status-list">
+                  <div><span>Canal selecionado</span><strong id="publishStatusChannel">Não configurado</strong></div>
+                  <div><span>Última publicação</span><strong id="publishStatusLast">Não publicado</strong></div>
+                  <div><span>Estado</span><strong id="publishStatusState">Aguardando publicação</strong></div>
+                  <div><span>Atualização no Discord</span><strong id="publishStatusSync">Publique para enviar alterações</strong></div>
+                </div>
+                <a id="openPublishChannelLink" class="panel-link" href="#" target="_blank" rel="noreferrer">Abrir canal</a>
+                <div class="side-stock-summary">
+                  <div class="section-title compact-title">
+                    <h2>Estoque</h2>
+                    <button type="button" id="openStockManagerButton" class="ghost-button">Gerenciar estoque</button>
+                  </div>
+                  <p><strong id="stockCounter">0 itens disponíveis</strong><span id="stockHint">Selecione ou salve um produto para gerenciar o estoque.</span></p>
+                </div>
+                <div class="form-actions product-form-footer publish-panel-actions">
+                  <button type="button" id="saveProductButton">Salvar alterações</button>
+                  <button type="button" id="publishButton">Publicar no canal</button>
+                  <button type="button" id="deleteButton" class="danger">Excluir produto</button>
+                </div>
+              </section>
+            </section>
+          </div>
+        </section>
+
+        <section id="ordersView" class="view">
+          <section class="panel">
+            <div class="section-title">
+              <h2>Pedidos</h2>
+            </div>
+            <input id="ordersSearch" type="search" placeholder="Buscar por produto, comprador ou pedido">
+            <div id="ordersTable" class="table"></div>
+          </section>
+        </section>
+
+        <section id="eventsView" class="view">
+          <section class="panel">
+            <div class="section-title">
+              <h2>Eventos do painel</h2>
+            </div>
+            <input id="eventsSearch" type="search" placeholder="Buscar por ação, assunto ou detalhe">
+            <div id="eventsTable" class="table"></div>
+          </section>
+        </section>
+
+        <section id="settingsView" class="view">
+          <div id="settingsHome" class="settings-home">
+            <div class="settings-home-grid">
+              <div class="settings-menu-list">
+                <button type="button" class="settings-menu-card" data-settings-section="appearance">
+                  <span>◐</span>
+                  <strong>Aparência</strong>
+                  <small>Personalize a identidade visual do seu bot.</small>
+                  <em>→</em>
+                </button>
+                <button type="button" class="settings-menu-card" data-settings-section="channels">
+                  <span>#</span>
+                  <strong>Canais e categorias</strong>
+                  <small>Gerencie os canais e categorias utilizados.</small>
+                  <em>→</em>
+                </button>
+                <button type="button" class="settings-menu-card" data-settings-section="roles">
+                  <span>●●</span>
+                  <strong>Cargos e boas-vindas</strong>
+                  <small>Configure cargos e mensagens de boas-vindas.</small>
+                  <em>→</em>
+                </button>
+                <button type="button" class="settings-menu-card" data-settings-section="messages">
+                  <span>✉</span>
+                  <strong>Mensagens</strong>
+                  <small>Edite mensagens do bot e respostas padrão.</small>
+                  <em>→</em>
+                </button>
+              </div>
+
+              <section class="panel settings-help-panel">
+                <div class="section-title">
+                  <h2>Como funciona</h2>
+                </div>
+                <p>Estas configurações permitem personalizar e gerenciar o comportamento do seu bot, desde a aparência até mensagens e permissões.</p>
+                <div class="settings-help-list">
+                  <div><strong>Aparência</strong><span>Altere nome, imagem, cores e estilo visual do bot.</span></div>
+                  <div><strong>Canais e categorias</strong><span>Organize e selecione os canais que o bot usará.</span></div>
+                  <div><strong>Cargos e boas-vindas</strong><span>Defina cargos, testes de canais e boas-vindas personalizadas.</span></div>
+                  <div><strong>Mensagens</strong><span>Edite respostas, comandos e mensagens automáticas do bot.</span></div>
+                </div>
+              </section>
+            </div>
+            <div class="settings-home-actions">
+              <button type="button" id="backupButton" class="settings-secondary-action">Exportar backup</button>
+            </div>
+          </div>
+          <form id="settingsForm" class="settings-grid settings-detail" hidden>
+            <div id="settingsBreadcrumb" class="settings-breadcrumb">Configurações / Aparência</div>
+            <section class="panel settings-section is-active" data-settings-panel="appearance">
+              <div class="section-title">
+                <h2>Aparência</h2>
+                <button type="button" class="ghost-button" data-settings-back>Voltar</button>
+              </div>
+              <div class="settings-fields">
+                <label>
+                  Nome do bot nas embeds
+                  <input id="settingBotName" name="botName" type="text" placeholder="Discord Store">
+                </label>
+                <label>
+                  Cor das embeds
+                  <span class="color-picker-row">
+                    <input id="settingEmbedColor" name="embedColor" type="color" value="#000000">
+                    <strong id="settingEmbedColorValue">#000000</strong>
+                  </span>
+                </label>
+                <label>
+                  Estilo dos botões
+                  <input id="settingButtonStyle" name="buttonStyle" type="hidden">
+                  <div class="custom-select" data-custom-select="buttonStyle"></div>
+                </label>
+                <label>
+                  Imagem padrão das embeds
+                  <input id="settingDefaultEmbedImageUrl" name="defaultEmbedImageUrl" type="url" placeholder="https://...">
+                </label>
+              </div>
+              <div class="settings-preview-wrap settings-side-preview">
+                <div class="section-title compact-title">
+                  <h2>Preview</h2>
+                </div>
+                <div class="discord-preview settings-preview" id="settingsPreviewCard">
+                  <div class="preview-title" id="settingsPreviewTitle">Discord Store | Produto</div>
+                  <div class="preview-description" id="settingsPreviewDescription">Descricao da embed de venda</div>
+                  <dl>
+                    <dt>Produto</dt>
+                    <dd>Produto exemplo</dd>
+                    <dt>Preco</dt>
+                    <dd>R$19,90</dd>
+                    <dt>Estoque</dt>
+                    <dd>12</dd>
+                  </dl>
+                  <img id="settingsPreviewImage" alt="">
+                  <button type="button" id="settingsPreviewButton" class="settings-preview-button">Comprar</button>
+                </div>
+              </div>
+              <div class="settings-inline-actions">
+                <button type="submit">Salvar configurações</button>
+              </div>
+            </section>
+
+            <section class="panel settings-section" data-settings-panel="channels">
+              <div class="section-title">
+                <h2>Canais e categoria</h2>
+                <button type="button" class="ghost-button" data-settings-back>Voltar</button>
+              </div>
+              <input id="settingGuildPicker" type="hidden">
+              <label>
+                Canal de logs públicas
+                <input id="settingPublicLogChannelId" name="publicLogChannelId" type="hidden">
+                <div class="custom-select" data-custom-select="publicLogChannelId"></div>
+              </label>
+              <label>
+                Canal de logs privadas
+                <input id="settingPrivateLogChannelId" name="privateLogChannelId" type="hidden">
+                <div class="custom-select" data-custom-select="privateLogChannelId"></div>
+              </label>
+              <label>
+                Categoria dos carrinhos
+                <input id="settingCartCategoryId" name="cartCategoryId" type="hidden">
+                <div class="custom-select" data-custom-select="cartCategoryId"></div>
+              </label>
+              <div class="settings-preview-wrap">
+                <div class="section-title compact-title">
+                  <h2>Preview</h2>
+                </div>
+                <div class="channels-preview">
+                  <div class="channels-preview-grid">
+                    <div class="channel-preview-item">
+                      <span>Logs públicas</span>
+                      <strong id="channelsPreviewPublicLog">Não configurado</strong>
+                    </div>
+                    <div class="channel-preview-item">
+                      <span>Logs privadas</span>
+                      <strong id="channelsPreviewPrivateLog">Não configurado</strong>
+                    </div>
+                    <div class="channel-preview-item">
+                      <span>Carrinhos</span>
+                      <strong id="channelsPreviewCartCategory">Não configurado</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="settings-inline-actions">
+                <button type="submit">Salvar configurações</button>
+              </div>
+            </section>
+
+            <section class="panel settings-section" data-settings-panel="roles">
+              <div class="section-title">
+                <h2>Cargos e boas-vindas</h2>
+                <button type="button" class="ghost-button" data-settings-back>Voltar</button>
+              </div>
+              <label>
+                Cargo VIP após compra
+                <input id="settingVipRoleId" name="vipRoleId" type="hidden">
+                <div class="custom-select" data-custom-select="vipRoleId"></div>
+              </label>
+              <label>
+                Servidor de boas-vindas
+                <input id="settingWelcomeGuildId" name="welcomeGuildId" type="hidden">
+                <div class="custom-select" data-custom-select="welcomeGuildId"></div>
+              </label>
+              <label>
+                Canal de boas-vindas
+                <input id="settingWelcomeChannelId" name="welcomeChannelId" type="hidden">
+                <div class="custom-select" data-custom-select="welcomeChannelId"></div>
+              </label>
+              <label>
+                Cargo automático de boas-vindas
+                <input id="settingWelcomeRoleId" name="welcomeRoleId" type="hidden">
+                <div class="custom-select" data-custom-select="welcomeRoleId"></div>
+              </label>
+              <div class="settings-inline-actions two-actions">
+                <button type="button" id="testChannelsButton" class="settings-secondary-action">Testar canais configurados</button>
+                <button type="submit">Salvar configurações</button>
+              </div>
+            </section>
+
+            <section class="panel settings-section" data-settings-panel="messages">
+              <div class="section-title">
+                <h2>Mensagens</h2>
+                <button type="button" class="ghost-button" data-settings-back>Voltar</button>
+              </div>
+              <div class="settings-fields">
+                <label>
+                  Rodapé da embed de produto
+                  <input id="settingProductFooterText" name="productFooterText" type="text" data-message-key="productFooterText" placeholder="Para comprar clique no botao abaixo.">
+                </label>
+                <label>
+                  Texto do botão de compra
+                  <input id="settingBuyButtonLabel" name="buyButtonLabel" type="text" data-message-key="buyButtonLabel" placeholder="Comprar">
+                </label>
+                <label>
+                  Mensagem de sem estoque
+                  <textarea id="settingOutOfStockMessage" name="outOfStockMessage" rows="3" data-message-key="outOfStockMessage" data-autogrow></textarea>
+                </label>
+                <label>
+                  Mensagem de carrinho criado
+                  <input id="settingCartCreatedMessage" name="cartCreatedMessage" type="hidden">
+                  <span class="fixed-token-field">
+                    <input id="settingCartCreatedMessageText" type="text" data-message-key="cartCreatedMessage" placeholder="Carrinho criado:">
+                    <strong>{channel}</strong>
+                  </span>
+                </label>
+                <label>
+                  Mensagem inicial de pagamento
+                  <textarea id="settingPaymentIntroMessage" name="paymentIntroMessage" rows="3" data-message-key="paymentIntroMessage" data-autogrow></textarea>
+                </label>
+                <label>
+                  Mensagem de entrega aprovada
+                  <textarea id="settingApprovedDmMessage" name="approvedDmMessage" rows="3" data-message-key="approvedDmMessage" data-autogrow></textarea>
+                </label>
+              </div>
+              <div class="message-preview-wrap settings-side-preview">
+                <div class="section-title compact-title">
+                  <h2>Preview</h2>
+                </div>
+                <div class="discord-preview message-preview" id="messagePreview">
+                  <small class="discord-preview-context" id="messagePreviewType">Embed de produto</small>
+                  <div class="preview-title" id="messagePreviewTitle">Discord Store | Produto</div>
+                  <div class="preview-description" id="messagePreviewBody">Para comprar clique no botao abaixo.</div>
+                  <div class="discord-footer" id="messagePreviewFooter">Para comprar clique no botao abaixo.</div>
+                  <button type="button" id="messagePreviewButton" class="settings-preview-button">Comprar</button>
+                </div>
+              </div>
+              <div class="settings-inline-actions">
+                <button type="submit">Salvar configurações</button>
+              </div>
+            </section>
+          </form>
+        </section>
+      </main>
+    </div>
+
+    <div id="loginOverlay" class="login-overlay" hidden>
+      <form id="loginForm" class="login-box">
+        <h2>Senha do painel</h2>
+        <input id="panelPassword" type="password" autocomplete="current-password" placeholder="PANEL_PASSWORD">
+        <button type="submit">Entrar</button>
+      </form>
+    </div>
+
+    <div id="unsavedOverlay" class="login-overlay" hidden>
+      <div class="login-box confirm-box">
+        <h2>Configurações não salvas</h2>
+        <p>Você alterou configurações. Deseja salvar antes de sair desta aba?</p>
+        <div class="confirm-actions">
+          <button type="button" id="saveBeforeLeaveButton">Salvar</button>
+          <button type="button" id="discardBeforeLeaveButton">Não salvar</button>
+          <button type="button" id="cancelLeaveButton" class="ghost-button">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="bulkStockOverlay" class="login-overlay" hidden>
+      <div class="login-box bulk-stock-box">
+        <h2>Adicionar estoque em lote</h2>
+        <p>Cole vários itens abaixo. Linhas vazias serão ignoradas.</p>
+        <textarea id="bulkStockText" rows="9" placeholder="item-1&#10;item-2&#10;item-3"></textarea>
+        <div id="bulkStockPreview" class="bulk-preview"></div>
+        <div class="confirm-actions">
+          <button type="button" id="previewBulkStockButton">Pré-visualizar</button>
+          <button type="button" id="confirmBulkStockButton">Confirmar</button>
+          <button type="button" id="cancelBulkStockButton" class="ghost-button">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="stockManagerOverlay" class="login-overlay stock-manager-overlay" hidden>
+      <div class="login-box stock-manager-box">
+        <div class="stock-manager-header">
+          <div class="stock-product-avatar" id="stockProductAvatar">DS</div>
+          <div>
+            <h2 id="stockProductName">Gerenciar estoque</h2>
+            <p id="stockProductId">Selecione um produto</p>
+          </div>
+          <button type="button" id="closeStockManagerButton" class="ghost-button">Fechar</button>
+        </div>
+        <div class="stock-metrics">
+          <article><span>Itens disponíveis</span><strong id="stockAvailableMetric">0</strong></article>
+          <article><span>Reservados</span><strong id="stockReservedMetric">0</strong></article>
+          <article><span>Entregues</span><strong id="stockDeliveredMetric">0</strong></article>
+          <article><span>Sem estoque</span><strong id="stockEmptyMetric">0</strong></article>
+        </div>
+        <div class="stock-manager-toolbar">
+          <div class="stock-filter-row">
+            <input id="stockSearch" type="search" placeholder="Buscar por codigo, conta ou conteudo">
+            <select id="stockStatusFilter">
+              <option value="available">Disponível</option>
+              <option value="all">Todos</option>
+            </select>
+          </div>
+          <div class="stock-add-row">
+            <input id="singleStockItem" type="text" placeholder="Novo item de estoque">
+            <button type="button" id="addSingleStockButton">Adicionar item</button>
+          </div>
+          <div class="stock-bulk-row">
+            <button type="button" id="openBulkStockButton" class="ghost-button">Importar lote</button>
+            <button type="button" id="copyStockButton" class="ghost-button">Copiar estoque</button>
+            <button type="button" id="exportStockButton" class="ghost-button">Exportar CSV</button>
+            <button type="button" id="clearStockButton" class="danger">Limpar estoque</button>
+          </div>
+        </div>
+        <div id="stockList" class="stock-table"></div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast" hidden></div>
+    <script src="/app.js?v=37"></script>
+  </body>
+</html>
