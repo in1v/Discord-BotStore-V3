@@ -54,6 +54,8 @@ MERCADO_PAGO_ACCESS_TOKEN=
 ENABLE_WELCOME=false
 
 PANEL_PORT=3000
+PANEL_HOST=127.0.0.1
+PUBLIC_BASE_URL=
 PANEL_PASSWORD=uma_senha_forte
 ```
 
@@ -65,6 +67,8 @@ Campos principais:
 - `MERCADO_PAGO_ACCESS_TOKEN`: necessário para gerar PIX.
 - `ENABLE_WELCOME`: precisa ficar no `.env` porque habilita a intent de membros antes do bot logar.
 - `PANEL_PORT`: porta do painel local. Padrão: `3000`.
+- `PANEL_HOST`: use `127.0.0.1` localmente e `0.0.0.0` em deploy.
+- `PUBLIC_BASE_URL`: domínio público do painel em produção, por exemplo `https://sua-loja.onrender.com`.
 - `PANEL_PASSWORD`: senha para acessar o painel. Recomendo configurar sempre.
 
 Nome da loja, cor, imagem, canais, categoria, cargo e mensagens são configurados pelo painel, não pelo `.env`.
@@ -175,6 +179,29 @@ git push -u origin main
 ```
 
 Se algum token já foi commitado ou compartilhado, gere outro token no Discord Developer Portal antes de publicar.
+
+## Deploy em produção
+
+Não hospede o bot completo na Netlify. A Netlify é boa para site estático e funções serverless, mas este projeto precisa de um processo Node contínuo para manter o `discord.js` conectado ao Gateway do Discord. Use um host de aplicação Node, como Render, Railway, Fly.io ou uma VPS.
+
+Configuração recomendada para host Node:
+
+- Build command: `npm install`
+- Start command: `npm start`
+- Node: `20` ou mais recente
+- Variáveis de ambiente:
+  - `TOKEN`
+  - `CLIENT_ID`
+  - `GUILD_ID`, opcional
+  - `MERCADO_PAGO_ACCESS_TOKEN`, se usar PIX
+  - `ENABLE_WELCOME=false` ou `true`
+  - `PANEL_HOST=0.0.0.0`
+  - `PANEL_PASSWORD=uma_senha_forte`
+  - `PUBLIC_BASE_URL=https://dominio-gerado-pelo-host`
+
+Depois do primeiro deploy, copie o domínio gerado pelo host e configure em `PUBLIC_BASE_URL`. Esse domínio será o endereço público do painel e também será usado nas URLs de imagem enviadas pelo painel.
+
+Observação: se o host apagar arquivos locais entre deploys ou reinícios, use volume/disco persistente para preservar `data/store.sqlite` e `public/uploads`.
 
 ## Segurança
 

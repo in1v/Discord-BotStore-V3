@@ -97,6 +97,17 @@ function localUploadFile(publicDir, imageUrl) {
   }
 }
 
+function publicBaseUrl(request) {
+  const configured = String(config.publicBaseUrl || "").replace(/\/+$/, "");
+  if (configured) return configured;
+
+  const forwardedProto = String(request.headers["x-forwarded-proto"] || "").split(",")[0].trim();
+  const forwardedHost = String(request.headers["x-forwarded-host"] || "").split(",")[0].trim();
+  const protocol = forwardedProto || request.protocol || "http";
+  const host = forwardedHost || request.get("host") || `127.0.0.1:${config.panelPort || 3000}`;
+  return `${protocol}://${host}`;
+}
+
 async function validateProductPublish(client, product) {
   const issues = [];
   if (!productReady(product)) issues.push("Complete nome, preco e descricao do produto.");
@@ -123,6 +134,7 @@ async function validateProductPublish(client, product) {
 
 function createWebServer(client, handlers = {}) {
   const app = express();
+  app.set("trust proxy", 1);
   const publicDir = path.join(__dirname, "public");
   const uploadDir = path.join(publicDir, "uploads");
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -240,7 +252,7 @@ function createWebServer(client, handlers = {}) {
       const fileName = `${Date.now()}-${crypto.randomUUID()}.${extension}`;
       fs.writeFileSync(path.join(uploadDir, fileName), buffer);
       db.recordAudit("image.upload", "panel", { fileName, size: buffer.length });
-      response.json({ url: `http://127.0.0.1:${config.panelPort || 3000}/uploads/${fileName}` });
+      response.json({ url: `${publicBaseUrl(request)}/uploads/${fileName}` });
     } catch (error) {
       response.status(400).json({ error: error.message });
     }
@@ -497,8 +509,10 @@ function createWebServer(client, handlers = {}) {
 function startWebServer(client, handlers) {
   const app = createWebServer(client, handlers);
   const port = Number(config.panelPort || 3000);
-  const server = app.listen(port, "127.0.0.1", () => {
-    console.log(`🖥️ - Painel local: http://localhost:${port}`);
+  const host = config.panelHost || "127.0.0.1";
+  const displayUrl = config.publicBaseUrl || `http://${host === "0.0.0.0" ? "localhost" : host}:${port}`;
+  const server = app.listen(port, host, () => {
+    console.log(`🖥️ - Painel: ${displayUrl}`);
   });
   return server;
 }
